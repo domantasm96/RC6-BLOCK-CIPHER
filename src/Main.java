@@ -6,22 +6,11 @@ public class Main {
     public static void main(String[] args) throws IOException {
         if(args.length == 4 ){
             if(args[0].equals("-e")){
-                if(args[2].length() > 3){
-                    encryption(args[1], args[2], args[3]);
-                }
-                else{
-                    System.out.println("Key symbols length should be >= 4");
-                }
+                encryption(args[1], args[2], args[3]);
 
             }
             else if(args[0].equals("-d")){
-                if(args[2].length() > 3){
-                    decryption(args[1], args[2], args[3]);
-                }
-                else{
-                    System.out.println("Key symbols length should be >= 4");
-                }
-
+                decryption(args[1], args[2], args[3]);
             }
         }
         else{
@@ -47,14 +36,18 @@ public class Main {
 
             byte[] text_byte = Files.readAllBytes(plainText_file);
             byte[] key_byte =  Files.readAllBytes(key_file);
+            if(key_byte.length > 3){
+                byte[] enc = rc6.encrypt(text_byte, key_byte);
 
-            byte[] enc = rc6.encrypt(text_byte, key_byte);
+                PrintWriter encryptFile = new PrintWriter("Encrypted_files/"+outputFile);
+                encryptFile.write(printBytes(enc));
+                encryptFile.close();
 
-            PrintWriter encryptFile = new PrintWriter("Encrypted_files/"+outputFile);
-            encryptFile.write(printBytes(enc));
-            encryptFile.close();
-
-            System.out.println("*********** Encryption is completed. Encrypted text is saved in "+outputFile + " file ******************");
+                System.out.println("*********** Encryption is completed. Encrypted text is saved in "+outputFile + " file ******************");
+            }
+            else{
+                System.out.println("Key symbols length should be >= 4\n");
+            }
         }
         catch (Exception e){
             System.out.println("Check if plain text file or key file exists.");
@@ -69,14 +62,19 @@ public class Main {
 
             byte[] encrypt_byte = stringToBytes(text.readLine());
             byte[] key_byte =  Files.readAllBytes(key_file);
-            byte[] dec = rc6.decrypt(encrypt_byte, key_byte);
+            if(key_byte.length > 3){
+                byte[] dec = rc6.decrypt(encrypt_byte, key_byte);
 
-            PrintWriter decryptFile = new PrintWriter("Decrypted_files/"+outputFile);
-            decryptFile.write(decimalToHex(dec));
-            decryptFile.close();
+                PrintWriter decryptFile = new PrintWriter("Decrypted_files/"+outputFile);
+                decryptFile.write(decimalToHex(dec));
+                decryptFile.close();
 
-            System.out.println("-----------------------DECRYPTION TEXT--------------------------\n\n"+new String(dec)+"\n");
-            System.out.println("*********** "+encryptedFile+" File decryption is done. Encrypted text is saved in "+outputFile + " file ******************");
+                System.out.println("-----------------------DECRYPTION TEXT--------------------------\n\n"+new String(dec)+"\n");
+                System.out.println("*********** "+encryptedFile+" File decryption is done. Encrypted text is saved in "+outputFile + " file ******************");
+            }
+           else{
+                System.out.println("Key symbols length should be >= 4\n");
+            }
         }
         catch(Exception e){
             System.out.println("Check if encrypted file or key file exists.");
