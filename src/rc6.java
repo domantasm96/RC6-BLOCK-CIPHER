@@ -10,6 +10,13 @@ public class rc6 {
     private static int counter = 0;
     private static int plainTextLength;
 
+    private static int rotateLeft(int n, int x){
+        return ((n << x) | (n >>> (w - x)));
+    }
+
+    private static int rotateRight(int n, int x){
+        return ((n >>> x) | (n << (w - x)));
+    }
 
 /*  Funkcijos pavadinimas: convertToHex
     Funkcijos argumentai: Registrų blokai A, B, C ir D.
@@ -48,12 +55,12 @@ public class rc6 {
     Funkcijos paskirtis: Jeigu blokas nesudaro 16 elementų, tuomet visos laisvos vietos pripildomos 0 reikšmėmis.
      */
     private static byte[] fillBufferZeroes(byte[] plainText){
-        int lenght = 16 - plainText.length % 16;
-        byte[] block = new byte[plainText.length + lenght];
+        int length = 16 - plainText.length % 16;
+        byte[] block = new byte[plainText.length + length];
         for (int i = 0; i < plainText.length; i++){
             block[i] = plainText[i];
         }
-        for(int i = plainText.length; i < plainText.length + lenght; i++){
+        for(int i = plainText.length; i < plainText.length + length; i++){
             block[i] = 0;
         }
         return block;
@@ -117,10 +124,10 @@ public class rc6 {
         regD = regD + S[1];
 
         for(int i = 1; i <= r ; i++){
-            temp1 = regB * (regB * 2 + 1) << 5;
-            temp2 = regD * (regD * 2 + 1) << 5;
-            regA = (regA ^ temp1 << temp2) + S[i * 2];
-            regC = (regC ^ temp2 << temp1) + S[i * 2 + 1];
+            temp1 = rotateLeft(regB * (regB * 2 + 1), 5);
+            temp2 = rotateLeft(regD * (regD * 2 + 1), 5);
+            regA = (rotateLeft(regA ^ temp1, temp2)) + S[i * 2];
+            regC = (rotateLeft(regC ^ temp2, temp1)) + S[i * 2 + 1];
 
             swap = regA;
             regA = regB;
@@ -172,10 +179,10 @@ public class rc6 {
             regB = regA;
             regA = swap;
 
-            temp2 = regD * (regD * 2 + 1) << 5;
-            temp1 = regB * (regB * 2 + 1) << 5;
-            regC =  (regC - S[i * 2 + 1] >> temp1) ^ temp2;
-            regA =  (regA -  + S[i * 2] >> temp2) ^ temp1;
+            temp2 = rotateLeft(regD * (regD * 2 + 1), 5);
+            temp1 = rotateLeft(regB * (regB * 2 + 1), 5);
+            regC =  rotateRight(regC - S[i * 2 + 1], temp1) ^ temp2;
+            regA =  rotateRight(regA -  + S[i * 2], temp2) ^ temp1;
         }
 
         regD = regD - S[1];
@@ -194,7 +201,6 @@ public class rc6 {
         plainTextLength = plainText.length;
         output = new byte[16*blocks_number];
         keyShedule(userKey);
-
         for(int i = 0; i < blocks_number; i++){
             if(blocks_number == i + 1){
                 mergeArrays(encryptBlock(fillBufferZeroes(Arrays.copyOfRange(plainText, block_counter , plainText.length))));
@@ -243,6 +249,7 @@ public class rc6 {
         int c = key.length / bytes;
         int[] L = new int[c];
         int index = 0;
+
         for(int i = 0; i < c; i++){
             L[i] = ((key[index++]) & 0xff | (key[index++] & 0xff) << 8 | (key[index++] & 0xff) << 16 | (key[index++] & 0xff) << 24);
         }
@@ -252,12 +259,12 @@ public class rc6 {
             S[i] = S[i-1] + Qw;
         }
 
-        int A = 0, B = 0, i = 0,j =0;
+        int A = 0, B = 0, i = 0,j = 0;
         int v = 3 * Math.max(c, 2*r+4);
 
         for(int k = 1;k <= v; k++){
-            A = S[i] = S[i] + A + B << 3;
-            B = L[j] = L[j] + A + B << A+B;
+            A = S[i] = rotateLeft(S[i] + A + B, 3);
+            B = L[j] = rotateLeft(L[j] + A + B, A+B);
             i = (i + 1) % (2 * r + 4);
             j = (j + 1) % c;
         }
